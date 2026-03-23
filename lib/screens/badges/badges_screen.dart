@@ -1,6 +1,4 @@
-// lib/screens/badges/badges_screen.dart
-
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Badge;
 import 'package:percent_indicator/percent_indicator.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';

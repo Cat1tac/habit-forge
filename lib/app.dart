@@ -1,6 +1,10 @@
 // lib/app.dart
 
 import 'package:flutter/material.dart';
+import 'package:habit_tracker/screens/challenges/adaptive_goals_screen.dart';
+import 'package:habit_tracker/screens/habits/habit_detail_screen.dart';
+import 'package:habit_tracker/screens/habits/habit_list_screen.dart';
+import 'package:habit_tracker/screens/reflections/reflection_history_screen.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_colors.dart';
 import 'providers/habit_provider.dart';
@@ -16,6 +20,7 @@ import 'screens/challenges/challenges_screen.dart';
 import 'screens/reflections/weekly_reflection_screen.dart';
 import 'screens/badges/badges_screen.dart';
 import 'screens/ai_buddy/ai_buddy_screen.dart';
+import 'core/theme/app_theme.dart';
 
 class HabitMasteryApp extends StatelessWidget {
   const HabitMasteryApp({super.key});
@@ -32,35 +37,24 @@ class HabitMasteryApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Habit Mastery League',
         debugShowCheckedModeBanner: false,
-        theme: _buildTheme(),
+        theme: AppTheme.dark,
         initialRoute: '/splash',
         routes: {
-          '/splash': (_) => const SplashScreen(),
-          '/home': (_) => const HomeScreen(),
-          '/create-habit': (_) => const CreateHabitScreen(),
-          '/heatmap': (_) => const HeatmapScreen(),
-          '/dashboard': (_) => const InsightDashboardScreen(),
-          '/challenges': (_) => const ChallengesScreen(),
-          '/reflection': (_) => const WeeklyReflectionScreen(),
-          '/badges': (_) => const BadgesScreen(),
-          '/ai-buddy': (_) => const AiBuddyScreen(),
+          '/splash':              (_) => const SplashScreen(),
+          '/home':                (_) => const HomeScreen(),
+          '/create-habit':        (_) => const CreateHabitScreen(),
+          '/habit-detail':        (_) => const HabitDetailScreen(),
+          '/habit-list':          (_) => const HabitListScreen(),
+          '/heatmap':             (_) => const HeatmapScreen(),
+          '/dashboard':           (_) => const InsightDashboardScreen(),
+          '/challenges':          (_) => const ChallengesScreen(),
+          '/adaptive-goals':      (_) => const AdaptiveGoalsScreen(),
+          '/reflection':          (_) => const WeeklyReflectionScreen(),
+          '/reflection-history':  (_) => const ReflectionHistoryScreen(),
+          '/badges':              (_) => const BadgesScreen(),
+          '/ai-buddy':            (_) => const AiBuddyScreen(),
         },
       ),
-    );
-  }
-
-  ThemeData _buildTheme() {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.primary,
-        secondary: AppColors.accent,
-        surface: AppColors.backgroundCard,
-      ),
-      scaffoldBackgroundColor: AppColors.backgroundDark,
-      cardColor: AppColors.backgroundCard,
-      fontFamily: 'Poppins', // Add Poppins to pubspec assets
     );
   }
 }
