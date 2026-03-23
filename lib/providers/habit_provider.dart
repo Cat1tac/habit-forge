@@ -99,4 +99,11 @@ class HabitProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  //archive a habit
+ Future<void> archiveHabit(String habitId) async {
+   await _habitDao.archiveHabit(habitId);
+   _habits.removeWhere((h) => h.id == habitId);
+   notifyListeners();
+ }
 }
