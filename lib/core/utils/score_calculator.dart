@@ -1,16 +1,10 @@
-// lib/core/utils/score_calculator.dart
-
 import '../../data/models/habit_log.dart';
 import 'date_utils.dart';
 
-/// Computes various performance scores used throughout the app.
-/// All methods are static and testable in isolation.
 class ScoreCalculator {
   ScoreCalculator._(); // Prevent instantiation
 
-  // ---------------------------------------------------------------------------
   // Weekly Score
-  // ---------------------------------------------------------------------------
 
   /// Calculates the aggregate score for the current week.
   /// [logs] — all habit logs for a given habit.
@@ -30,9 +24,7 @@ class ScoreCalculator {
     return ((totalScore / maxPossible) * 100).clamp(0, 100).round();
   }
 
-  // ---------------------------------------------------------------------------
   // Completion Rate
-  // ---------------------------------------------------------------------------
 
   /// Returns percentage of days in the last [days] days that were completed.
   /// [completedDates] — set of dates when habit was done.
@@ -54,9 +46,7 @@ class ScoreCalculator {
     return ((completed / days) * 100).round();
   }
 
-  // ---------------------------------------------------------------------------
   // XP per completion (also used in HabitProvider)
-  // ---------------------------------------------------------------------------
 
   /// Calculates XP to award for a single completion.
   /// More XP is awarded for longer streaks and higher habit levels.
@@ -71,9 +61,7 @@ class ScoreCalculator {
     return (base * streakMultiplier).round();
   }
 
-  // ---------------------------------------------------------------------------
   // League rank calculation
-  // ---------------------------------------------------------------------------
 
   /// Returns a rank title based on total XP.
   static String rankTitle(int totalXp) {
@@ -95,9 +83,7 @@ class ScoreCalculator {
     return '👑';
   }
 
-  // ---------------------------------------------------------------------------
   // Badge progress
-  // ---------------------------------------------------------------------------
 
   /// Returns progress (0.0–1.0) toward a badge's condition value.
   static double badgeProgress({
