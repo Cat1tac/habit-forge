@@ -2,6 +2,7 @@ import '../models/habit.dart';
 import '../models/habit_log.dart';
 import 'database_helper.dart';
 import 'package:sqflite/sqflite.dart';
+import '../../core/utils/date_utils.dart';
 
 /// Data Access Object for Habit CRUD operations
 class HabitDao {
@@ -120,5 +121,33 @@ class HabitDao {
     final db = await _dbHelper.database;
     await db.delete('habit_logs', where: 'habit_id = ?', whereArgs: [habitId]);
     await db.delete('habits', where: 'id = ?', whereArgs: [habitId]);
+  }
+
+  /// Returns the total number of habit completions logged in the current week
+  /// (Monday 00:00:00 to today 23:59:59) across all habits.
+  Future<int> getWeeklyCompletionCount() async {
+    final db = await _dbHelper.database;
+
+    // Get the Monday of the current week as a date string
+    final weekStart = AppDateUtils.toIsoDate(AppDateUtils.startOfCurrentWeek());
+    final weekEnd = AppDateUtils.toIsoDate(
+      AppDateUtils.startOfCurrentWeek().add(const Duration(days: 6)),
+    );
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) as count
+      FROM habit_logs
+      WHERE completed_date >= ? AND completed_date <= ?
+    ''', ['$weekStart 00:00:00', '$weekEnd 23:59:59']);
+
+    return result.first['count'] as int? ?? 0;
+  }
+
+  /// Returns the weekly completion rate as an integer 0–100.
+  /// [totalPossible] = number of active habits × 7 days.
+  Future<int> getWeeklyCompletionRate({required int totalPossible}) async {
+    if (totalPossible == 0) return 0;
+    final completed = await getWeeklyCompletionCount();
+    return ((completed / totalPossible) * 100).round().clamp(0, 100);
   }
 }

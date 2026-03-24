@@ -1,5 +1,3 @@
-// lib/screens/reflections/weekly_reflection_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -9,6 +7,7 @@ import '../../data/models/reflection.dart';
 import '../../data/database/reflection_dao.dart';
 import '../../providers/ai_provider.dart';
 import '../../providers/habit_provider.dart';
+import '../../data/database/habit_dao.dart';
 
 /// Weekly reflection form — lets the user rate their week (mood 1–5),
 /// write highlights and struggles, and request an AI insight.
@@ -23,6 +22,8 @@ class _WeeklyReflectionScreenState extends State<WeeklyReflectionScreen> {
   final _reflectionDao = ReflectionDao();
   final _highlightsController = TextEditingController();
   final _strugglesController = TextEditingController();
+  final _habitDao = ReflectionDao();
+  final _habitDbDao = HabitDao();
 
   int _mood = 3;
   bool _isSaving = false;
@@ -269,16 +270,31 @@ class _WeeklyReflectionScreenState extends State<WeeklyReflectionScreen> {
   Future<void> _requestAiInsight() async {
     setState(() => _aiRequested = true);
 
-    // Save first so we have a reflection ID
+    // Save reflection first so we have a record to attach the insight to
     await _save(showSnack: false);
 
     final habits = context.read<HabitProvider>().habits;
+    final totalPossible = habits.length * 7;
+
+    // Fetch the real completion count from the database
+    final completedCount = await _habitDbDao.getWeeklyCompletionCount();
+
+    if (!mounted) return;
+
     await context.read<AiProvider>().fetchWeeklyInsight(
       habits: habits,
-      completedCount: 0,   
-      totalPossible: habits.length * 7,
+      completedCount: completedCount,   // real value from DB
+      totalPossible: totalPossible,
       userMoodNote: _mood.toString(),
     );
+
+    // Save the AI insight text back to the reflection record
+    if (_savedReflection != null) {
+      final insight = context.read<AiProvider>().weeklyInsight;
+      if (insight != null) {
+        await _reflectionDao.saveAiInsight(_savedReflection!.id, insight);
+      }
+    }
   }
 
   Future<void> _save({bool showSnack = true}) async {

@@ -8,11 +8,37 @@ import '../../core/utils/score_calculator.dart';
 import '../../providers/habit_provider.dart';
 import '../../providers/streak_provider.dart';
 import '../../providers/challenge_provider.dart';
+import '../../data/database/habit_dao.dart';
 
 /// Shows adaptive goals personalized to the user's performance.
 /// Tapping "Generate New Challenges" creates fresh challenges from current stats.
-class AdaptiveGoalsScreen extends StatelessWidget {
+class AdaptiveGoalsScreen extends StatefulWidget {
   const AdaptiveGoalsScreen({super.key});
+
+  @override
+  State<AdaptiveGoalsScreen> createState() => _AdaptiveGoalsScreenState();
+}
+
+class _AdaptiveGoalsScreenState extends State<AdaptiveGoalsScreen> {
+  final HabitDao _habitDao = HabitDao();
+  int _weeklyCompletionCount = 0;
+  bool _isLoading = true;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _loadWeeklyCount();
+  }
+
+  Future<void> _loadWeeklyCount() async {
+    final count = await _habitDao.getWeeklyCompletionCount();
+    if (mounted) {
+      setState(() {
+        _weeklyCompletionCount = count;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,97 +48,99 @@ class AdaptiveGoalsScreen extends StatelessWidget {
         backgroundColor: AppColors.backgroundDark,
         title: Text(AppStrings.adaptiveTitle, style: AppTextStyles.headingMedium),
       ),
-      body: Consumer3<HabitProvider, StreakProvider, ChallengeProvider>(
-        builder: (context, habitProvider, streakProvider, challengeProvider, _) {
-          final totalXp = habitProvider.totalXp;
-          final topStreak = streakProvider.topCurrentStreak;
-          final habitCount = habitProvider.habits.length;
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Consumer3<HabitProvider, StreakProvider, ChallengeProvider>(
+              builder: (context, habitProvider, streakProvider,
+                  challengeProvider, _) {
+                final totalXp = habitProvider.totalXp;
+                final topStreak = streakProvider.topCurrentStreak;
+                final habitCount = habitProvider.habits.length;
 
-          // Compute adaptive targets based on current performance
-          final streakGoal = (topStreak * 1.2).round().clamp(3, 90);
-          final completionGoal = (habitCount * 7 * 0.8).round(); // 80% of weekly max
-          final xpGoal = (totalXp * 0.15).round().clamp(50, 500);
+                final streakGoal = (topStreak * 1.2).round().clamp(3, 90);
+                final completionGoal =
+                    (habitCount * 7 * 0.8).round().clamp(1, 49);
+                final xpGoal = (totalXp * 0.15).round().clamp(50, 500);
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Subheader
-                Text(AppStrings.adaptiveSubtitle, style: AppTextStyles.bodyLarge),
-                const SizedBox(height: 24),
-
-                // Stats context card
-                _buildContextCard(totalXp, topStreak, habitCount),
-                const SizedBox(height: 24),
-
-                // Goal cards
-                Text('Your Adaptive Targets', style: AppTextStyles.headingSmall),
-                const SizedBox(height: 14),
-                _buildGoalCard(
-                  emoji: '🔥',
-                  title: AppStrings.adaptiveStreak,
-                  current: topStreak,
-                  target: streakGoal,
-                  color: AppColors.warning,
-                  unit: 'days',
-                ),
-                const SizedBox(height: 12),
-                _buildGoalCard(
-                  emoji: '✅',
-                  title: AppStrings.adaptiveCompletion,
-                  current: 0, 
-                  target: completionGoal,
-                  color: AppColors.success,
-                  unit: 'completions',
-                ),
-                const SizedBox(height: 12),
-                _buildGoalCard(
-                  emoji: '⚡',
-                  title: AppStrings.adaptiveXp,
-                  current: totalXp % 100, // XP earned this week (stub)
-                  target: xpGoal,
-                  color: AppColors.primary,
-                  unit: 'XP',
-                ),
-
-                const SizedBox(height: 32),
-
-                // Generate button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      await challengeProvider.generateAdaptiveChallenges(
-                        currentStreak: topStreak,
-                        weeklyCompletionRate: 70,
-                        totalXp: totalXp,
-                      );
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('🎯 New challenges generated!'),
-                            backgroundColor: AppColors.success,
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(AppStrings.adaptiveSubtitle,
+                          style: AppTextStyles.bodyLarge),
+                      const SizedBox(height: 24),
+                      _buildContextCard(totalXp, topStreak, habitCount),
+                      const SizedBox(height: 24),
+                      Text('Your Adaptive Targets',
+                          style: AppTextStyles.headingSmall),
+                      const SizedBox(height: 14),
+                      _buildGoalCard(
+                        emoji: '🔥',
+                        title: AppStrings.adaptiveStreak,
+                        current: topStreak,
+                        target: streakGoal,
+                        color: AppColors.warning,
+                        unit: 'days',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildGoalCard(
+                        emoji: '✅',
+                        title: AppStrings.adaptiveCompletion,
+                        current: _weeklyCompletionCount, // real value
+                        target: completionGoal,
+                        color: AppColors.success,
+                        unit: 'completions',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildGoalCard(
+                        emoji: '⚡',
+                        title: AppStrings.adaptiveXp,
+                        current: totalXp % 100,
+                        target: xpGoal,
+                        color: AppColors.primary,
+                        unit: 'XP',
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            await challengeProvider.generateAdaptiveChallenges(
+                              currentStreak: topStreak,
+                              weeklyCompletionRate: habitCount == 0
+                                  ? 0
+                                  : ((_weeklyCompletionCount /
+                                              (habitCount * 7)) *
+                                          100)
+                                      .round(),
+                              totalXp: totalXp,
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('🎯 New challenges generated!'),
+                                  backgroundColor: AppColors.success,
+                                ),
+                              );
+                              Navigator.pop(context);
+                            }
+                          },
+                          icon: const Icon(Icons.auto_awesome),
+                          label: const Text('Generate New Challenges'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14)),
                           ),
-                        );
-                        Navigator.pop(context);
-                      }
-                    },
-                    icon: const Icon(Icons.auto_awesome),
-                    label: const Text('Generate New Challenges'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
 

@@ -51,7 +51,7 @@ class _SplashScreenState extends State<SplashScreen>
       // Trigger database creation (runs onCreate if first launch)
       await DatabaseHelper().database;
 
-      setState(() => _statusText = 'Loading your league...');
+      setState(() => _statusText = 'Loading your app...');
 
       // Minimum splash display time so the animation plays fully
       await Future.delayed(const Duration(milliseconds: 1800));
@@ -100,7 +100,7 @@ class _SplashScreenState extends State<SplashScreen>
                   style: AppTextStyles.displayLarge,
                 ),
                 Text(
-                  'LEAGUE',
+                  'APP',
                   style: AppTextStyles.displayMedium.copyWith(
                     color: AppColors.primary,
                     letterSpacing: 8,
